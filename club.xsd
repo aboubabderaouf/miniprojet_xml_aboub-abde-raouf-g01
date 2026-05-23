@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!--
+  ═══════════════════════════════════════════════════════════
+   SCHÉMA XSD — Club Info_Tech
+   Fichier : club.xsd
+   Valide  : club.xml
+  ═══════════════════════════════════════════════════════════
+  -->
+
+  <!-- ═══════════════════════════════════════
+       TYPES SIMPLES AVEC RESTRICTIONS
+  ═══════════════════════════════════════ -->
+
+  <!-- ID catégorie : format "C" suivi d'un ou plusieurs chiffres (C1, C2, …) -->
+  <xs:simpleType name="CategorieIDType">
+    <xs:restriction base="xs:ID">
+      <xs:pattern value="C\d+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ID membre : format "M" suivi exactement de 3 chiffres (M001, M002, …) -->
+  <xs:simpleType name="MembreIDType">
+    <xs:restriction base="xs:ID">
+      <xs:pattern value="M\d{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ID concours : format "CO" suivi d'un ou plusieurs chiffres (CO1, CO2, …) -->
+  <xs:simpleType name="ConcoursIDType">
+    <xs:restriction base="xs:ID">
+      <xs:pattern value="CO\d+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Coefficient : décimal strictement positif (> 0) -->
+  <xs:simpleType name="CoefficientType">
+    <xs:restriction base="xs:decimal">
+      <xs:minExclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Complexité : entier compris dans l'intervalle [0 ; 100] -->
+  <xs:simpleType name="ComplexiteType">
+    <xs:restriction base="xs:integer">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Temps d'exécution : entier strictement positif (> 0, en ms) -->
+  <xs:simpleType name="TempsExecutionType">
+    <xs:restriction base="xs:integer">
+      <xs:minExclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Email : doit contenir un "@" et un "." après le domaine -->
+  <xs:simpleType name="EmailType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@\s]+@[^@\s]+\.[^@\s]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- Chaîne de caractères non vide (libelle, titre, nom, prenom) -->
+  <xs:simpleType name="NonEmptyStringType">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ═══════════════════════════════════════
+       TYPES COMPLEXES
+  ═══════════════════════════════════════ -->
+
+  <!--
+    Type : CategorieType
+    Élément : <categorie id="C1" libelle="Intelligence Artificielle"/>
+    Élément vide (aucun contenu), uniquement des attributs.
+  -->
+  <xs:complexType name="CategorieType">
+    <xs:attribute name="id"      type="CategorieIDType"    use="required"/>
+    <xs:attribute name="libelle" type="NonEmptyStringType" use="required"/>
+  </xs:complexType>
+
+  <!--
+    Type : CategoriesType
+    Élément : <categories> — conteneur de <categorie> (minimum 3)
+  -->
+  <xs:complexType name="CategoriesType">
+    <xs:sequence>
+      <xs:element name="categorie" type="CategorieType"
+                  minOccurs="3" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!--
+    Type : MembreType
+    Élément : <membre id="M001" categorieRef="C1">
+                <nom>…</nom> <prenom>…</prenom> <email>…</email>
+              </membre>
+  -->
+  <xs:complexType name="MembreType">
+    <xs:sequence>
+      <xs:element name="nom"    type="NonEmptyStringType"/>
+      <xs:element name="prenom" type="NonEmptyStringType"/>
+      <xs:element name="email"  type="EmailType"/>
+    </xs:sequence>
+    <xs:attribute name="id"           type="MembreIDType" use="required"/>
+    <!-- categorieRef doit pointer vers un xs:ID existant dans le document -->
+    <xs:attribute name="categorieRef" type="xs:IDREF"     use="required"/>
+  </xs:complexType>
+
+  <!--
+    Type : MembresType
+    Élément : <membres> — conteneur de <membre> (minimum 8)
+  -->
+  <xs:complexType name="MembresType">
+    <xs:sequence>
+      <xs:element name="membre" type="MembreType"
+                  minOccurs="8" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!--
+    Type : ParticipantType
+    Élément : <participant membreRef="M001">
+                <complexite>…</complexite>
+                <tempsExecution>…</tempsExecution>
+              </participant>
+  -->
+  <xs:complexType name="ParticipantType">
+    <xs:sequence>
+      <xs:element name="complexite"     type="ComplexiteType"/>
+      <xs:element name="tempsExecution" type="TempsExecutionType"/>
+    </xs:sequence>
+    <!-- membreRef doit pointer vers un xs:ID existant dans le document -->
+    <xs:attribute name="membreRef" type="xs:IDREF" use="required"/>
+  </xs:complexType>
+
+  <!--
+    Type : ParticipantsType
+    Élément : <participants> — conteneur de <participant> (minimum 3 par concours)
+  -->
+  <xs:complexType name="ParticipantsType">
+    <xs:sequence>
+      <xs:element name="participant" type="ParticipantType"
+                  minOccurs="3" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!--
+    Type : ConcoursItemType
+    Élément individuel : <concours id="CO1" categorieRef="C1"
+                                   date="2025-03-15" coefficient="1.5">
+  -->
+  <xs:complexType name="ConcoursItemType">
+    <xs:sequence>
+      <xs:element name="titre"        type="NonEmptyStringType"/>
+      <xs:element name="participants" type="ParticipantsType"/>
+    </xs:sequence>
+    <xs:attribute name="id"           type="ConcoursIDType"   use="required"/>
+    <!-- categorieRef doit pointer vers un xs:ID existant dans le document -->
+    <xs:attribute name="categorieRef" type="xs:IDREF"         use="required"/>
+    <xs:attribute name="date"         type="xs:date"          use="required"/>
+    <xs:attribute name="coefficient"  type="CoefficientType"  use="required"/>
+  </xs:complexType>
+
+  <!--
+    Type : ConcoursContainerType
+    Élément : <concours> conteneur (liste des concours, minimum 3)
+    ATTENTION : le même nom "concours" est utilisé pour le conteneur et chaque item.
+  -->
+  <xs:complexType name="ConcoursContainerType">
+    <xs:sequence>
+      <xs:element name="concours" type="ConcoursItemType"
+                  minOccurs="3" maxOccurs="unbounded"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- ═══════════════════════════════════════
+       ÉLÉMENT RACINE
+  ═══════════════════════════════════════ -->
+
+  <!--
+    Élément racine : <club nom="Info_Tech">
+    Séquence obligatoire : categories → membres → concours
+  -->
+  <xs:element name="club">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="categories" type="CategoriesType"/>
+        <xs:element name="membres"    type="MembresType"/>
+        <xs:element name="concours"   type="ConcoursContainerType"/>
+      </xs:sequence>
+      <xs:attribute name="nom" type="NonEmptyStringType" use="required"/>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
